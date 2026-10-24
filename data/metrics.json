@@ -1,0 +1,258 @@
+{
+ "dataset": {
+  "raw": 1080,
+  "clean": 902,
+  "removed": 178,
+  "phish": 495,
+  "legit": 407,
+  "train": 586,
+  "holdout": 316,
+  "campaigns": {
+   "gift_card_ceo": 61,
+   "hr_benefits": 76,
+   "invoice_overdue": 90,
+   "it_maintenance": 74,
+   "meeting_invite": 78,
+   "mfa_reset": 90,
+   "parcel_fee": 90,
+   "parcel_ok": 46,
+   "payroll_notice": 61,
+   "payroll_update": 90,
+   "pw_reset_notice": 72,
+   "vendor_bank_change": 74
+  },
+  "holdout_campaigns": [
+   "gift_card_ceo",
+   "it_maintenance",
+   "parcel_ok",
+   "payroll_notice",
+   "vendor_bank_change"
+  ],
+  "live_links": 0,
+  "max_train_test_similarity": 0.1981525985750072,
+  "dedup_threshold": 0.88
+ },
+ "models": {
+  "Keyword rules": {
+   "random": {
+    "acc": 0.9424778761061947,
+    "precision": 0.9826086956521739,
+    "recall": 0.9112903225806451,
+    "f1": 0.9456066945606695,
+    "cm": [
+     [
+      100,
+      2
+     ],
+     [
+      11,
+      113
+     ]
+    ],
+    "fpr_urgent": 0.038461538461538464,
+    "abstain": 0.004424778761061947
+   },
+   "holdout": {
+    "acc": 0.8354430379746836,
+    "precision": 0.9029126213592233,
+    "recall": 0.6888888888888889,
+    "f1": 0.7815126050420168,
+    "cm": [
+     [
+      171,
+      10
+     ],
+     [
+      42,
+      93
+     ]
+    ],
+    "fpr_urgent": 0.07407407407407407,
+    "abstain": 0.0379746835443038
+   },
+   "drift": {
+    "punct": {
+     "flip": 0.0,
+     "shift": 0.0
+    },
+    "defang": {
+     "flip": 0.0759493670886076,
+     "shift": 0.0670022552845942
+    },
+    "case": {
+     "flip": 0.0,
+     "shift": 0.0
+    }
+   },
+   "phish_recall_by_campaign": {
+    "gift_card_ceo": 0.6065573770491803,
+    "vendor_bank_change": 0.7567567567567568
+   }
+  },
+  "TF-IDF word LR": {
+   "random": {
+    "acc": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "cm": [
+     [
+      102,
+      0
+     ],
+     [
+      0,
+      124
+     ]
+    ],
+    "fpr_urgent": 0.0,
+    "abstain": 0.0
+   },
+   "holdout": {
+    "acc": 0.7183544303797469,
+    "precision": 0.8833333333333333,
+    "recall": 0.3925925925925926,
+    "f1": 0.5435897435897435,
+    "cm": [
+     [
+      174,
+      7
+     ],
+     [
+      82,
+      53
+     ]
+    ],
+    "fpr_urgent": 0.007407407407407408,
+    "abstain": 0.18354430379746836
+   },
+   "drift": {
+    "punct": {
+     "flip": 0.06962025316455696,
+     "shift": 0.03812422992632489
+    },
+    "defang": {
+     "flip": 0.08860759493670886,
+     "shift": 0.0420823354696264
+    },
+    "case": {
+     "flip": 0.06962025316455696,
+     "shift": 0.03812422992632489
+    }
+   },
+   "phish_recall_by_campaign": {
+    "gift_card_ceo": 0.0,
+    "vendor_bank_change": 0.7162162162162162
+   }
+  },
+  "Char n-gram LR": {
+   "random": {
+    "acc": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "cm": [
+     [
+      102,
+      0
+     ],
+     [
+      0,
+      124
+     ]
+    ],
+    "fpr_urgent": 0.0,
+    "abstain": 0.0
+   },
+   "holdout": {
+    "acc": 0.7183544303797469,
+    "precision": 0.859375,
+    "recall": 0.4074074074074074,
+    "f1": 0.5527638190954773,
+    "cm": [
+     [
+      172,
+      9
+     ],
+     [
+      80,
+      55
+     ]
+    ],
+    "fpr_urgent": 0.0,
+    "abstain": 0.1518987341772152
+   },
+   "drift": {
+    "punct": {
+     "flip": 0.06962025316455696,
+     "shift": 0.05704517684078309
+    },
+    "defang": {
+     "flip": 0.07278481012658228,
+     "shift": 0.04617815655330919
+    },
+    "case": {
+     "flip": 0.0379746835443038,
+     "shift": 0.03703972198847147
+    }
+   },
+   "phish_recall_by_campaign": {
+    "gift_card_ceo": 0.0,
+    "vendor_bank_change": 0.7432432432432432
+   }
+  }
+ },
+ "primary": "Keyword rules",
+ "acceptance": {
+  "AT01": {
+   "text": "Hi Sam, your password was changed today. If this was you, no action is needed. If not, please call the helpdesk on ext. 4400.",
+   "probs": {
+    "Keyword rules": 0.05315113639806371,
+    "TF-IDF word LR": 0.058817250870395306,
+    "Char n-gram LR": 0.07024420968408374
+   },
+   "fpr_urgent": {
+    "Keyword rules": 0.07407407407407407,
+    "TF-IDF word LR": 0.007407407407407408,
+    "Char n-gram LR": 0.0
+   }
+  },
+  "AT02": {
+   "Keyword rules": {
+    "gift_card_ceo": 0.6065573770491803,
+    "vendor_bank_change": 0.7567567567567568
+   },
+   "TF-IDF word LR": {
+    "gift_card_ceo": 0.0,
+    "vendor_bank_change": 0.7162162162162162
+   },
+   "Char n-gram LR": {
+    "gift_card_ceo": 0.0,
+    "vendor_bank_change": 0.7432432432432432
+   }
+  },
+  "AT03": {
+   "text": "Payroll alert: your last payslip failed. Confirm your bank details at hxxps://rb[.]gy/pay77 before 5 pm.",
+   "shifts": {
+    "Keyword rules": {
+     "base": 0.97125150407346,
+     "punct": 0.97125150407346,
+     "defang": 0.7824497764231124,
+     "case": 0.97125150407346
+    },
+    "TF-IDF word LR": {
+     "base": 0.9635424806620532,
+     "punct": 0.8928478632196983,
+     "defang": 0.878360974035639,
+     "case": 0.8928478632196983
+    },
+    "Char n-gram LR": {
+     "base": 0.9752885578804426,
+     "punct": 0.9016736815527786,
+     "defang": 0.8804735400861701,
+     "case": 0.9103746848695904
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PhishShift – message risk triage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{--bench:#dde5e1;--ink:#11262b;--panel:#f5f8f6;--line:#b9c7c1;--slate:#586b70;--clear:#2e9c78;--review:#e6a23c;--flag:#c73a2e;--c0:#c73a2e;--c1:#8f4bc2;--c2:#d27a00;--c3:#0a7f9c;--c4:#a8325e;--c5:#5a6c70;--c6:#3c7d2e}
+@media(prefers-color-scheme:dark){:root{--bench:#0e1b1f;--ink:#e3ece8;--panel:#16282d;--line:#2c4249;--slate:#93a9ad}}
+*{box-sizing:border-box}html{scroll-padding-top:12px}
+body{margin:0;background:var(--bench);color:var(--ink);font:400 16px/1.55 "IBM Plex Sans",system-ui,sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0;letter-spacing:-.01em}
+:focus-visible{outline:3px solid var(--review);outline-offset:2px}
+header{background:#11262b;color:#e3ece8;padding:14px clamp(16px,4vw,48px);display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+header h1{font-size:1.5rem;font-weight:800}header h1 span{color:var(--review)}
+header p{margin:0;font-size:.88rem;color:#b5c7c2;max-width:70ch}
+main{padding:clamp(14px,3vw,36px) clamp(16px,4vw,48px);display:grid;gap:24px;max-width:1280px;margin:auto}
+.bench{display:grid;grid-template-columns:minmax(300px,5fr) 7fr;gap:24px}
+@media(max-width:860px){.bench{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px}
+.card h2{font-size:1.3rem;margin-bottom:12px}
+label,.lab{display:block;font-size:.82rem;color:var(--slate);margin:12px 0 4px;font-weight:500}
+input,textarea{width:100%;font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:4px;padding:10px}
+textarea{min-height:170px;resize:vertical}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{font:inherit;font-size:.88rem;background:transparent;color:var(--ink);border:0;padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--panel)}
+.go{margin-top:16px;width:100%;font:700 1rem "Bricolage Grotesque",sans-serif;background:var(--ink);color:var(--panel);border:0;border-radius:4px;padding:13px;cursor:pointer}
+.go:disabled{opacity:.6}
+.samples{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.samples button{font:inherit;font-size:.8rem;background:transparent;border:1px dashed var(--slate);color:var(--ink);border-radius:20px;padding:3px 10px;cursor:pointer}
+#verdict{font:800 clamp(1.7rem,4vw,2.5rem)/1.1 "Bricolage Grotesque",sans-serif;margin:2px 0 4px}
+#vsub{margin:0 0 18px;color:var(--slate);font-size:.92rem;min-height:1.4em}
+.spec{position:relative;height:46px;border-radius:4px;overflow:hidden;display:flex;border:1px solid var(--line)}
+.spec i{display:block;height:100%}
+.z0{width:35%;background:var(--clear)}.z1{width:30%;background:repeating-linear-gradient(135deg,var(--review) 0 8px,#f1c071 8px 16px)}.z2{width:35%;background:var(--flag)}
+.needle{position:absolute;top:-4px;bottom:-4px;left:50%;width:4px;margin-left:-2px;background:var(--ink);box-shadow:0 0 0 2px var(--panel);transition:left 1.1s cubic-bezier(.2,.9,.2,1);opacity:.25}
+.needle.live{opacity:1}
+.ticks{position:relative;height:34px}
+.tick{position:absolute;top:4px;transform:translateX(-50%);font:.72rem "IBM Plex Mono",monospace;text-align:center;line-height:1;transition:left 1.1s cubic-bezier(.2,.9,.2,1)}
+.tick:before{content:"";display:block;margin:0 auto 3px;border:5px solid transparent;border-bottom:7px solid var(--slate);border-top:0}
+.zl{display:flex;font-size:.78rem;color:var(--slate);margin-top:2px}.zl span:nth-child(1){width:35%}.zl span:nth-child(2){width:30%;text-align:center}.zl span:nth-child(3){width:35%;text-align:right}
+.marked{margin:14px 0 8px;padding:14px;border-left:4px solid var(--line);white-space:pre-wrap;word-break:break-word;min-height:64px;background:color-mix(in srgb,var(--panel) 70%,var(--bench))}
+mark{background:transparent;color:inherit;border-bottom:3px solid var(--c0);padding:0 1px}
+#cues{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px;font-size:.92rem}
+#cues li:before{content:"";display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:8px;background:var(--k)}
+.terms{font-size:.85rem;color:var(--slate);margin-top:10px}
+.delta{margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:4px;font-size:.9rem}
+.err{color:var(--flag);font-weight:600}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
+nav.tabs button{font:600 .95rem "Bricolage Grotesque",sans-serif;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:7px 14px;cursor:pointer}
+nav.tabs button[aria-selected=true]{background:var(--ink);color:var(--panel)}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:560px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{font-weight:600;color:var(--slate)}
+.bar{display:inline-block;height:8px;background:var(--ink);border-radius:2px;vertical-align:middle;margin-right:6px}
+.bar.bad{background:var(--flag)}
+.note{font-size:.88rem;color:var(--slate);max-width:75ch}
+.v-flag{color:var(--flag)}.v-clear{color:var(--clear)}.v-review{color:#b97a10}
+footer{padding:0 clamp(16px,4vw,48px) 30px;text-align:center;font-size:.8rem;color:var(--slate)}
+@media(prefers-reduced-motion:reduce){.needle,.tick{transition:none}}
+</style></head><body>
+<header><h1>Phish<span>Shift</span></h1>
+<p>Message risk triage for security training. Results support a human decision and never guarantee a message is safe. Links in pasted text are shown as text and are never opened.</p></header>
+<main>
+<section class="bench">
+ <div class="card"><h2>Specimen</h2>
+  <div class="lab">Channel</div><div class="seg" id="chan"><button aria-pressed="true" data-v="email">Email</button><button aria-pressed="false" data-v="sms">SMS</button></div>
+  <label for="subj">Subject (email only)</label><input id="subj" maxlength="300" autocomplete="off">
+  <label for="body">Message text (defang links: hxxps://example[.]com)</label><textarea id="body" maxlength="4000" placeholder="Paste a simulated message here"></textarea>
+  <div class="lab">Stress test: rewrite the message before scanning</div>
+  <div class="seg" id="pert"><button aria-pressed="true" data-v="">None</button><button aria-pressed="false" data-v="punct">Punctuation</button><button aria-pressed="false" data-v="defang">Link style</button><button aria-pressed="false" data-v="case">Capitals</button></div>
+  <button class="go" id="scan">Scan message</button>
+  <div class="lab" style="margin-top:16px">Load a harmless sample</div><div class="samples" id="samples"></div>
+ </div>
+ <div class="card" aria-live="polite"><h2>Risk reading</h2>
+  <div id="verdict">No specimen yet</div><p id="vsub">Paste a message and scan it. Scores between 35% and 65% go to a person.</p>
+  <div class="spec"><i class="z0"></i><i class="z1"></i><i class="z2"></i><div class="needle" id="needle"></div></div>
+  <div class="zl"><span>Clear</span><span>Needs a person</span><span>Flag</span></div>
+  <div class="ticks" id="ticks"></div>
+  <div class="marked" id="marked">Highlighted cues will appear here.</div>
+  <ul id="cues"></ul><div class="terms" id="terms"></div><div id="delta"></div>
+ </div>
+</section>
+<section class="card"><h2>Evidence</h2>
+ <nav class="tabs" role="tablist" id="tabs"></nav><div id="panel"></div></section>
+</main>
+<footer>PhishShift · ML-07 · synthetic training corpus only · no real credentials, mailboxes or personal data</footer>
+<script>
+const $=s=>document.querySelector(s), COL=["--c0","--c1","--c2","--c3","--c4","--c5","--c6"];
+const pct=x=>(x*100).toFixed(0)+"%", f2=x=>x==null?"–":x.toFixed(2);
+const VT={flag:"Flag as suspicious",clear:"Looks routine",review:"Send to a person"};
+const state={chan:"email",pert:""};
+function el(t,a={},...k){const e=document.createElement(t);for(const[x,y]of Object.entries(a))x=="class"?e.className=y:x=="html"?e.innerHTML=y:e.setAttribute(x,y);k.flat().forEach(c=>e.append(c));return e}
+function seg(id,key){document.querySelectorAll(id+" button").forEach(b=>b.onclick=()=>{document.querySelectorAll(id+" button").forEach(o=>o.setAttribute("aria-pressed",o===b));state[key]=b.dataset.v})}
+seg("#chan","chan");seg("#pert","pert");
+function render(r,perturbed){
+ $("#verdict").textContent=VT[r.verdict];$("#verdict").className="v-"+r.verdict;
+ $("#vsub").textContent=`${r.primary} scores this ${pct(r.p)}. Model disagreement: ${pct(r.spread)}${r.spread>.45?" (too high, so a person should decide)":""}.`;
+ const n=$("#needle");n.classList.add("live");n.style.left=(r.p*100)+"%";
+ const t=$("#ticks");t.innerHTML="";Object.entries(r.probs).forEach(([k,v])=>t.append(el("div",{class:"tick",style:`left:${v*100}%`,title:`${k}: ${pct(v)}`},k.split(" ")[0]==="Keyword"?"rules":k.includes("word")?"word":"char")));
+ const m=$("#marked");m.textContent="";let pos=0;const used=[];
+ r.cues.forEach(c=>{if(c.start<pos)return;used.push(c.label);m.append(r.text.slice(pos,c.start));const i=[...new Set(r.cues.map(x=>x.label))].indexOf(c.label);const mk=el("mark",{style:`border-color:var(${COL[i%7]})`},r.text.slice(c.start,c.end));m.append(mk);pos=c.end});
+ m.append(r.text.slice(pos));
+ const labs=[...new Set(r.cues.map(x=>x.label))];const ul=$("#cues");ul.innerHTML="";
+ labs.forEach((l,i)=>ul.append(el("li",{style:`--k:var(${COL[i%7]})`},l)));
+ if(!labs.length)ul.append(el("li",{style:"--k:var(--clear)"},"No known risk cues found. That does not prove the message is safe."));
+ const tm=r.terms;$("#terms").textContent=(tm.risk.length?`Words pushing the word model toward risk: ${tm.risk.join(", ")}. `:"")+(tm.safe.length?`Toward safe: ${tm.safe.join(", ")}.`:"");
+}
+$("#scan").onclick=async()=>{
+ const b=$("#scan");b.disabled=true;b.textContent="Scanning…";$("#delta").innerHTML="";
+ try{const res=await fetch("/api/scan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subject:state.chan==="sms"?"":$("#subj").value,body:$("#body").value,perturb:state.pert})});
+  const r=await res.json();if(!res.ok){$("#delta").append(el("p",{class:"err"},r.error||"Scan failed. Try again."));return}
+  render(r);
+  if(r.perturbed){const p=r.perturbed,d=p.p-r.p;$("#delta").append(el("div",{class:"delta"},`After the rewrite the score moved from ${pct(r.p)} to ${pct(p.p)} (${d>=0?"+":""}${(d*100).toFixed(0)} points) and the reading is now “${VT[p.verdict]}”. `+(p.verdict!==r.verdict?"The verdict changed, which is a model limitation to report (AT-03).":"The verdict held.")));
+   const pb=el("div",{class:"samples"},el("button",{type:"button"},"Show the rewritten text on the needle"));pb.firstChild.onclick=()=>render(p);$("#delta").append(pb)}
+ }catch(e){$("#delta").append(el("p",{class:"err"},"Could not reach the server. Check your connection and scan again."))}finally{b.disabled=false;b.textContent="Scan message"}};
+fetch("/api/samples").then(r=>r.json()).then(s=>s.forEach((x,i)=>{const b=el("button",{type:"button"},(x.truth?"Phish-style ":"Routine ")+(i%4+1));b.onclick=()=>{$("#body").value=x.text;$("#subj").value=""};$("#samples").append(b)}));
+// Evidence tabs
+const TABS={models:"Model comparison",accept:"Acceptance tests",cp5:"Checkpoint 5 batch",map:"Requirement map"};let M=null;
+Object.entries(TABS).forEach(([k,v])=>{const b=el("button",{role:"tab","aria-selected":"false"},v);b.onclick=()=>show(k);b.dataset.k=k;$("#tabs").append(b)});
+function tbl(head,rows){return el("div",{class:"tw"},el("table",{},el("thead",{},el("tr",{},head.map(h=>el("th",{},h)))),el("tbody",{},rows.map(r=>el("tr",{},r.map(c=>el("td",{html:c})))))))}
+const bar=(v,bad)=>`<span class="bar${bad?" bad":""}" style="width:${Math.round(v*90)}px"></span>${f2(v)}`;
+async function show(k){
+ document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.k===k));const P=$("#panel");P.innerHTML="";
+ if(!M)M=await (await fetch("/api/metrics")).json();const D=M.dataset;
+ if(k==="models"){P.append(el("p",{class:"note"},`${D.raw} messages generated, ${D.removed} near-duplicates removed, ${D.clean} kept (${D.phish} phish-style, ${D.legit} routine). Training used ${D.train} messages; the held-out campaigns (${D.holdout_campaigns.join(", ")}) were never seen: ${D.holdout} messages. Highest word overlap between any test and train message is ${D.max_train_test_similarity.toFixed(2)}.`),
+  tbl(["Model","F1 on random split","F1 on unseen campaigns","Recall","Precision","False alarms on urgent routine mail","Sent to a person"],Object.entries(M.models).map(([n,v])=>[n+(n===M.primary?" (used for the verdict)":""),bar(v.random.f1),bar(v.holdout.f1,v.holdout.f1<v.random.f1-.15),f2(v.holdout.recall),f2(v.holdout.precision),bar(v.holdout.fpr_urgent||0,(v.holdout.fpr_urgent||0)>.1),pct(v.holdout.abstain)])),
+  el("p",{class:"note"},"A random split flatters the learned models. Testing on whole unseen campaigns shows what happens when attackers change wording."),
+  el("h3",{style:"margin:18px 0 6px"},"Drift under rewrites (share of verdicts that flip / average score shift)"),
+  tbl(["Model","Punctuation","Link style","Capitals"],Object.entries(M.models).map(([n,v])=>[n,...["punct","defang","case"].map(p=>`${pct(v.drift[p].flip)} / ${(v.drift[p].shift*100).toFixed(1)} pts`)])));}
+ if(k==="accept"){const a=M.acceptance;P.append(
+  el("h3",{},"AT-01 · A routine password-reset notice"),el("p",{class:"note"},`“${a.AT01.text}”`),
+  tbl(["Model","Phish score","False-positive rate on held-out urgent routine mail"],Object.keys(a.AT01.probs).map(n=>[n,pct(a.AT01.probs[n]),pct(a.AT01.fpr_urgent[n]||0)])),
+  el("h3",{style:"margin-top:18px"},"AT-02 · Phishing with unfamiliar wording on a campaign excluded from training"),
+  tbl(["Model",...Object.keys(Object.values(a.AT02)[0])],Object.entries(a.AT02).map(([n,v])=>[n,...Object.values(v).map(pct)])),
+  el("p",{class:"note"},"Each cell is the share of that campaign's messages caught."),
+  el("h3",{style:"margin-top:18px"},"AT-03 · Link style and punctuation changes"),el("p",{class:"note"},`“${a.AT03.text}”`),
+  tbl(["Model","Original","Punctuation","Link style","Capitals"],Object.entries(a.AT03.shifts).map(([n,v])=>[n,pct(v.base),pct(v.punct),pct(v.defang),pct(v.case)])));}
+ if(k==="cp5"){P.append(el("p",{class:"note"},"Eight new harmless simulated messages, each rewritten three ways. Wrong verdicts are marked in red."));
+  const rows=await (await fetch("/api/cp5")).json();const ok=(r,x)=>(r.truth?x.verdict==="flag":x.verdict==="clear");
+  const cell=(r,x)=>`<span class="v-${ok(r,x)?"clear":x.verdict==="review"?"review":"flag"}">${pct(x.p)} ${x.verdict}</span>`;
+  P.append(tbl(["Message","Truth","Original","Punctuation","Link style","Capitals"],rows.map(r=>[r.text.slice(0,70)+"…",r.truth?"phish-style":"routine",cell(r,r.base),cell(r,r.punct),cell(r,r.defang),cell(r,r.case)])))}
+ if(k==="map"){P.append(tbl(["Requirement","Where it is shown"],[["FR-01 dedup","Corpus counts above; data/raw_corpus.csv vs data/clean_corpus.csv; core.dedup"],["FR-02 three models","Model comparison tab; core.build_models"],["FR-03 campaign holdout","core.HOLDOUT; F1 on unseen campaigns"],["FR-04 abstain + safe explanation","Needs a person band; cue highlights; word-model terms"],["FR-05 false alarms + drift","Model comparison tab, both tables"],["NFR-01 never open links","Text is only parsed in core.py; no network calls on user text"],["NFR-02 no real data","Synthetic corpus; data/ has no personal data"],["NFR-03 decision support","Header banner on every screen"]]))}
+}
+show("models");
+</script></body></html>
