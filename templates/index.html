@@ -1,145 +1,312 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PhishShift – message risk triage</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PhishShift | Message Risk Triage</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bench:#dde5e1;--ink:#11262b;--panel:#f5f8f6;--line:#b9c7c1;--slate:#586b70;--clear:#2e9c78;--review:#e6a23c;--flag:#c73a2e;--c0:#c73a2e;--c1:#8f4bc2;--c2:#d27a00;--c3:#0a7f9c;--c4:#a8325e;--c5:#5a6c70;--c6:#3c7d2e}
-@media(prefers-color-scheme:dark){:root{--bench:#0e1b1f;--ink:#e3ece8;--panel:#16282d;--line:#2c4249;--slate:#93a9ad}}
-*{box-sizing:border-box}html{scroll-padding-top:12px}
-body{margin:0;background:var(--bench);color:var(--ink);font:400 16px/1.55 "IBM Plex Sans",system-ui,sans-serif}
-h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0;letter-spacing:-.01em}
-:focus-visible{outline:3px solid var(--review);outline-offset:2px}
-header{background:#11262b;color:#e3ece8;padding:14px clamp(16px,4vw,48px);display:flex;gap:18px;align-items:center;flex-wrap:wrap}
-header h1{font-size:1.5rem;font-weight:800}header h1 span{color:var(--review)}
-header p{margin:0;font-size:.88rem;color:#b5c7c2;max-width:70ch}
-main{padding:clamp(14px,3vw,36px) clamp(16px,4vw,48px);display:grid;gap:24px;max-width:1280px;margin:auto}
-.bench{display:grid;grid-template-columns:minmax(300px,5fr) 7fr;gap:24px}
-@media(max-width:860px){.bench{grid-template-columns:1fr}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px}
-.card h2{font-size:1.3rem;margin-bottom:12px}
-label,.lab{display:block;font-size:.82rem;color:var(--slate);margin:12px 0 4px;font-weight:500}
-input,textarea{width:100%;font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:4px;padding:10px}
-textarea{min-height:170px;resize:vertical}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
-.seg button{font:inherit;font-size:.88rem;background:transparent;color:var(--ink);border:0;padding:6px 12px;cursor:pointer}
-.seg button[aria-pressed=true]{background:var(--ink);color:var(--panel)}
-.go{margin-top:16px;width:100%;font:700 1rem "Bricolage Grotesque",sans-serif;background:var(--ink);color:var(--panel);border:0;border-radius:4px;padding:13px;cursor:pointer}
-.go:disabled{opacity:.6}
-.samples{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.samples button{font:inherit;font-size:.8rem;background:transparent;border:1px dashed var(--slate);color:var(--ink);border-radius:20px;padding:3px 10px;cursor:pointer}
-#verdict{font:800 clamp(1.7rem,4vw,2.5rem)/1.1 "Bricolage Grotesque",sans-serif;margin:2px 0 4px}
-#vsub{margin:0 0 18px;color:var(--slate);font-size:.92rem;min-height:1.4em}
-.spec{position:relative;height:46px;border-radius:4px;overflow:hidden;display:flex;border:1px solid var(--line)}
-.spec i{display:block;height:100%}
-.z0{width:35%;background:var(--clear)}.z1{width:30%;background:repeating-linear-gradient(135deg,var(--review) 0 8px,#f1c071 8px 16px)}.z2{width:35%;background:var(--flag)}
-.needle{position:absolute;top:-4px;bottom:-4px;left:50%;width:4px;margin-left:-2px;background:var(--ink);box-shadow:0 0 0 2px var(--panel);transition:left 1.1s cubic-bezier(.2,.9,.2,1);opacity:.25}
-.needle.live{opacity:1}
-.ticks{position:relative;height:34px}
-.tick{position:absolute;top:4px;transform:translateX(-50%);font:.72rem "IBM Plex Mono",monospace;text-align:center;line-height:1;transition:left 1.1s cubic-bezier(.2,.9,.2,1)}
-.tick:before{content:"";display:block;margin:0 auto 3px;border:5px solid transparent;border-bottom:7px solid var(--slate);border-top:0}
-.zl{display:flex;font-size:.78rem;color:var(--slate);margin-top:2px}.zl span:nth-child(1){width:35%}.zl span:nth-child(2){width:30%;text-align:center}.zl span:nth-child(3){width:35%;text-align:right}
-.marked{margin:14px 0 8px;padding:14px;border-left:4px solid var(--line);white-space:pre-wrap;word-break:break-word;min-height:64px;background:color-mix(in srgb,var(--panel) 70%,var(--bench))}
-mark{background:transparent;color:inherit;border-bottom:3px solid var(--c0);padding:0 1px}
-#cues{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px;font-size:.92rem}
-#cues li:before{content:"";display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:8px;background:var(--k)}
-.terms{font-size:.85rem;color:var(--slate);margin-top:10px}
-.delta{margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:4px;font-size:.9rem}
-.err{color:var(--flag);font-weight:600}
-nav.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
-nav.tabs button{font:600 .95rem "Bricolage Grotesque",sans-serif;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:7px 14px;cursor:pointer}
-nav.tabs button[aria-selected=true]{background:var(--ink);color:var(--panel)}
-.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:560px}
-th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{font-weight:600;color:var(--slate)}
-.bar{display:inline-block;height:8px;background:var(--ink);border-radius:2px;vertical-align:middle;margin-right:6px}
-.bar.bad{background:var(--flag)}
-.note{font-size:.88rem;color:var(--slate);max-width:75ch}
-.v-flag{color:var(--flag)}.v-clear{color:var(--clear)}.v-review{color:#b97a10}
-footer{padding:0 clamp(16px,4vw,48px) 30px;text-align:center;font-size:.8rem;color:var(--slate)}
-@media(prefers-reduced-motion:reduce){.needle,.tick{transition:none}}
-</style></head><body>
-<header><h1>Phish<span>Shift</span></h1>
-<p>Message risk triage for security training. Results support a human decision and never guarantee a message is safe. Links in pasted text are shown as text and are never opened.</p></header>
-<main>
-<section class="bench">
- <div class="card"><h2>Specimen</h2>
-  <div class="lab">Channel</div><div class="seg" id="chan"><button aria-pressed="true" data-v="email">Email</button><button aria-pressed="false" data-v="sms">SMS</button></div>
-  <label for="subj">Subject (email only)</label><input id="subj" maxlength="300" autocomplete="off">
-  <label for="body">Message text (defang links: hxxps://example[.]com)</label><textarea id="body" maxlength="4000" placeholder="Paste a simulated message here"></textarea>
-  <div class="lab">Stress test: rewrite the message before scanning</div>
-  <div class="seg" id="pert"><button aria-pressed="true" data-v="">None</button><button aria-pressed="false" data-v="punct">Punctuation</button><button aria-pressed="false" data-v="defang">Link style</button><button aria-pressed="false" data-v="case">Capitals</button></div>
-  <button class="go" id="scan">Scan message</button>
-  <div class="lab" style="margin-top:16px">Load a harmless sample</div><div class="samples" id="samples"></div>
- </div>
- <div class="card" aria-live="polite"><h2>Risk reading</h2>
-  <div id="verdict">No specimen yet</div><p id="vsub">Paste a message and scan it. Scores between 35% and 65% go to a person.</p>
-  <div class="spec"><i class="z0"></i><i class="z1"></i><i class="z2"></i><div class="needle" id="needle"></div></div>
-  <div class="zl"><span>Clear</span><span>Needs a person</span><span>Flag</span></div>
-  <div class="ticks" id="ticks"></div>
-  <div class="marked" id="marked">Highlighted cues will appear here.</div>
-  <ul id="cues"></ul><div class="terms" id="terms"></div><div id="delta"></div>
- </div>
-</section>
-<section class="card"><h2>Evidence</h2>
- <nav class="tabs" role="tablist" id="tabs"></nav><div id="panel"></div></section>
+:root{--bg:#070d1d;--panel:#0e172b;--border:#1e2b47;--text:#eef3ff;--muted:#a3b0cc;--purple:#8438ff;--cyan:#29c8f5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px Inter,Arial,sans-serif}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.app{display:grid;grid-template-columns:245px minmax(0,1fr);min-height:100vh}
+.sidebar{padding:25px 16px;border-right:1px solid var(--border);background:#090f20;display:flex;flex-direction:column;gap:25px}
+.brand{display:flex;align-items:center;gap:12px;padding:5px 4px 23px;border-bottom:1px solid var(--border)}
+.logo{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,#287bff,#bb22e9);display:grid;place-items:center;font-size:25px}
+.brand strong{font-size:23px;letter-spacing:-1px}.brand strong span{color:#b07aff}
+.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:2px;margin-top:5px}
+.nav{display:grid;gap:9px}
+.nav button{display:flex;align-items:center;gap:13px;text-align:left;background:transparent;border:1px solid transparent;border-radius:13px;padding:14px;color:#b8c5df}
+.nav button .ico{width:24px;color:#83aaff;font-size:19px}
+.nav button.active,.nav button:hover{background:linear-gradient(100deg,#287bff,#c51de4);color:white}
+.safe{margin-top:auto;padding:18px 9px;color:var(--muted);line-height:1.8}
+.safe b{color:#fff;display:block;font-size:18px}
+main{padding:30px;max-width:1600px;width:100%;margin:auto}
+.welcome{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:24px}
+h1{font-size:clamp(27px,3vw,42px);letter-spacing:-1.7px;margin:0 0 10px}
+.gradient{background:linear-gradient(90deg,#31c9ff,#c85aff);color:transparent;background-clip:text}
+p{color:var(--muted);line-height:1.6}
+.layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,.85fr);gap:18px}
+.stack{display:grid;gap:18px;align-content:start}
+.card{background:linear-gradient(145deg,#101a30,#0b1325);border:1px solid var(--border);border-radius:19px;padding:22px;min-width:0}
+.card h2{font-size:20px;margin:0 0 8px}
+.card h3{font-size:15px;margin:0 0 8px}
+.card p{margin:4px 0 16px;font-size:13px}
+.field-label{display:block;color:var(--muted);font-size:13px;margin:15px 0 8px}
+input,textarea,select{width:100%;background:#080f1e;color:white;border:1px solid #2b3a57;border-radius:11px;padding:13px}
+textarea{min-height:155px;resize:vertical;line-height:1.6}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.row select{flex:1;min-width:150px}
+.btn{border:1px solid var(--border);border-radius:11px;padding:12px 17px;background:#121e35;color:white}
+.primary{background:linear-gradient(100deg,#287bff,#bd23e8);border:0;font-weight:700}
+.row .primary{flex:1;min-width:150px}
+.btn:hover{filter:brightness(1.15)}
+.samples{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.samples button{font-size:12px;background:#111d34;color:#c7d4ed;border:1px solid #293954;border-radius:20px;padding:8px 11px}
+.result{border-radius:13px;padding:16px;background:#091223;border:1px solid var(--border);margin-top:15px}
+.result h2{font-size:23px}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:15px}
+.metric{padding:14px;border-radius:12px;background:#101d34;border:1px solid var(--border)}
+.metric small{display:block;color:var(--muted);margin-bottom:9px}
+.metric strong{font-size:22px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.green{background:#11d6a0}.yellow{background:#ffb02e}.red{background:#ff477e}
+.quick{display:grid;gap:10px}
+.example{border:1px solid var(--border);border-radius:13px;padding:15px;background:#0b1427;text-align:left;color:white}
+.example b{display:block;margin-bottom:7px}.example p{margin:0;font-size:12px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:18px}
+.tabs button{background:#101b30;border:1px solid var(--border);color:var(--muted);padding:10px 13px;border-radius:9px}
+.tabs button.active{background:linear-gradient(100deg,#287bff,#8438ff);color:white}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:13px}
+td,th{text-align:left;padding:12px;border-bottom:1px solid var(--border)}
+th{color:#aebcda}
+footer{text-align:center;color:#71809e;padding:24px;font-size:12px}
+@media(max-width:1000px){.app{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid var(--border);padding:16px}.brand{padding-bottom:15px}.nav{grid-template-columns:repeat(4,minmax(0,1fr))}.nav button{justify-content:center;flex-direction:column;gap:5px;padding:10px 4px;font-size:12px;text-align:center}.nav button .ico{width:auto}.safe{display:none}main{padding:18px}.layout{grid-template-columns:1fr}}
+@media(max-width:520px){.nav{grid-template-columns:repeat(3,minmax(0,1fr))}.card{padding:16px}.metrics{grid-template-columns:1fr}.welcome{align-items:flex-start}.welcome h1{font-size:29px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">✉</div><div><strong>Phish<span>Shift</span></strong><small>MESSAGE RISK TRIAGE</small></div></div>
+  <nav class="nav" id="navigation">
+    <button class="active" data-target="dashboard"><span class="ico">⌂</span>Dashboard</button>
+    <button data-target="scanner"><span class="ico">▣</span>Scan Message</button>
+    <button data-target="history"><span class="ico">◷</span>History / Batch</button>
+    <button data-target="evidence"><span class="ico">▥</span>Model Comparison</button>
+    <button data-target="examples"><span class="ico">✉</span>Examples</button>
+    <button data-target="settings"><span class="ico">⚙</span>Settings</button>
+    <button data-target="about"><span class="ico">ⓘ</span>About</button>
+  </nav>
+  <div class="safe"><b>Stay Aware.<br>Stay Safe.</b>AI-powered phishing risk analysis for a safer inbox.</div>
+</aside>
+
+<main id="dashboard">
+  <section class="welcome">
+    <div><h1>Welcome to <span class="gradient">PhishShift</span></h1>
+    <p>AI-powered message risk triage for a safer inbox.</p>
+    <p>Paste a message, scan it, and review the risk indicators.</p></div>
+  </section>
+
+  <div class="layout">
+    <div class="stack">
+      <section class="card" id="scanner">
+        <h2>✦ Scan a Message</h2>
+        <p>Analyze a simulated email or SMS for suspicious patterns.</p>
+        <label class="field-label" for="channel">Message channel</label>
+        <select id="channel"><option value="email">Email</option><option value="sms">SMS</option></select>
+        <label class="field-label" for="subject">Email subject (optional)</label>
+        <input id="subject" maxlength="300" placeholder="Enter email subject">
+        <label class="field-label" for="message">Message text</label>
+        <textarea id="message" maxlength="4000" placeholder="Paste your simulated message here..."></textarea>
+        <label class="field-label" for="perturb">Stress test rewrite</label>
+        <select id="perturb"><option value="">None</option><option value="punct">Punctuation</option><option value="defang">Link style</option><option value="case">Capitals</option></select>
+        <div class="row" style="margin-top:15px">
+          <button class="btn primary" id="scan">➤ Scan Message</button>
+          <button class="btn" id="clear">Clear</button>
+        </div>
+        <div id="scanError" role="alert"></div>
+        <div class="result" id="analysis">
+          <h2>Analysis Result</h2><p id="summary">Your analysis will appear here after scanning.</p>
+          <div class="metrics">
+            <div class="metric"><small>Risk Score</small><strong id="risk">—%</strong></div>
+            <div class="metric"><small>Classification</small><strong id="classification">—</strong></div>
+            <div class="metric"><small>Confidence</small><strong id="confidence">—%</strong></div>
+          </div>
+          <h3 style="margin-top:18px">Highlighted Message</h3>
+          <div id="highlighted" style="white-space:pre-wrap;overflow-wrap:anywhere;color:#cbd7f0">No message scanned yet.</div>
+          <h3 style="margin-top:18px">Key Risk Factors</h3>
+          <ul id="cues"><li>No analysis yet.</li></ul>
+          <div id="terms"></div><div id="rewriteResult"></div>
+        </div>
+      </section>
+
+      <section class="card" id="evidence">
+        <h2>Model Evidence & Comparison</h2>
+        <p>Review model performance and the project's acceptance tests.</p>
+        <div class="tabs" id="tabs">
+          <button class="active" data-tab="models">Model comparison</button>
+          <button data-tab="accept">Acceptance tests</button>
+          <button data-tab="cp5">Checkpoint 5</button>
+          <button data-tab="map">Requirements</button>
+        </div>
+        <div id="panel">Loading evidence…</div>
+      </section>
+      <section class="card" id="history"><h2>History / Batch</h2><p>This interface currently scans one message at a time. Previous scans are not saved in this page.</p></section>
+      <section class="card" id="settings"><h2>Settings</h2><p>Choose the message channel and stress-test rewrite in the Scan Message section.</p></section>
+      <section class="card" id="about"><h2>About PhishShift</h2><p>PhishShift supports human review of simulated messages. A score is not a guarantee that a message is safe or malicious.</p></section>
+    </div>
+
+    <aside class="stack">
+      <section class="card">
+        <h2>Detection Result</h2><p>Updated when you scan a message.</p>
+        <div class="result"><div id="status">Not scanned</div><h1 id="bigScore">0%</h1><p>Risk score</p>
+          <p><span class="dot red"></span>Flag as suspicious</p>
+          <p><span class="dot yellow"></span>Needs human review</p>
+          <p><span class="dot green"></span>Looks routine</p>
+        </div>
+      </section>
+      <section class="card" id="examples">
+        <h2>Quick Examples</h2><p>Load a simulated message to try the scanner.</p>
+        <div class="quick" id="samples"><p>Loading examples…</p></div>
+      </section>
+      <section class="card"><h2>Responsible Use</h2><p>Review results carefully. Never paste real passwords, private messages, or sensitive information.</p></section>
+    </aside>
+  </div>
+  <footer>PhishShift · Synthetic training data · Decision support, not a guarantee</footer>
 </main>
-<footer>PhishShift · ML-07 · synthetic training corpus only · no real credentials, mailboxes or personal data</footer>
+</div>
+
 <script>
-const $=s=>document.querySelector(s), COL=["--c0","--c1","--c2","--c3","--c4","--c5","--c6"];
-const pct=x=>(x*100).toFixed(0)+"%", f2=x=>x==null?"–":x.toFixed(2);
-const VT={flag:"Flag as suspicious",clear:"Looks routine",review:"Send to a person"};
-const state={chan:"email",pert:""};
-function el(t,a={},...k){const e=document.createElement(t);for(const[x,y]of Object.entries(a))x=="class"?e.className=y:x=="html"?e.innerHTML=y:e.setAttribute(x,y);k.flat().forEach(c=>e.append(c));return e}
-function seg(id,key){document.querySelectorAll(id+" button").forEach(b=>b.onclick=()=>{document.querySelectorAll(id+" button").forEach(o=>o.setAttribute("aria-pressed",o===b));state[key]=b.dataset.v})}
-seg("#chan","chan");seg("#pert","pert");
-function render(r,perturbed){
- $("#verdict").textContent=VT[r.verdict];$("#verdict").className="v-"+r.verdict;
- $("#vsub").textContent=`${r.primary} scores this ${pct(r.p)}. Model disagreement: ${pct(r.spread)}${r.spread>.45?" (too high, so a person should decide)":""}.`;
- const n=$("#needle");n.classList.add("live");n.style.left=(r.p*100)+"%";
- const t=$("#ticks");t.innerHTML="";Object.entries(r.probs).forEach(([k,v])=>t.append(el("div",{class:"tick",style:`left:${v*100}%`,title:`${k}: ${pct(v)}`},k.split(" ")[0]==="Keyword"?"rules":k.includes("word")?"word":"char")));
- const m=$("#marked");m.textContent="";let pos=0;const used=[];
- r.cues.forEach(c=>{if(c.start<pos)return;used.push(c.label);m.append(r.text.slice(pos,c.start));const i=[...new Set(r.cues.map(x=>x.label))].indexOf(c.label);const mk=el("mark",{style:`border-color:var(${COL[i%7]})`},r.text.slice(c.start,c.end));m.append(mk);pos=c.end});
- m.append(r.text.slice(pos));
- const labs=[...new Set(r.cues.map(x=>x.label))];const ul=$("#cues");ul.innerHTML="";
- labs.forEach((l,i)=>ul.append(el("li",{style:`--k:var(${COL[i%7]})`},l)));
- if(!labs.length)ul.append(el("li",{style:"--k:var(--clear)"},"No known risk cues found. That does not prove the message is safe."));
- const tm=r.terms;$("#terms").textContent=(tm.risk.length?`Words pushing the word model toward risk: ${tm.risk.join(", ")}. `:"")+(tm.safe.length?`Toward safe: ${tm.safe.join(", ")}.`:"");
+const $=s=>document.querySelector(s);
+const pct=x=>(Number(x)*100).toFixed(0)+"%";
+const label={flag:"Flag as suspicious",clear:"Looks routine",review:"Send to a person"};
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+document.querySelectorAll("#navigation button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("#navigation button").forEach(x=>x.classList.toggle("active",x===b));
+  const target=document.getElementById(b.dataset.target);
+  if(target)target.scrollIntoView({behavior:"smooth",block:"start"});
+}));
+
+$("#channel").addEventListener("change",()=>{$("#subject").disabled=$("#channel").value==="sms";});
+$("#clear").onclick=()=>{$("#message").value="";$("#subject").value="";$("#scanError").textContent="";$("#risk").textContent="—%";$("#classification").textContent="—";$("#confidence").textContent="—%";$("#summary").textContent="Your analysis will appear here after scanning.";$ ("#highlighted").textContent="No message scanned yet.";$("#cues").innerHTML="<li>No analysis yet.</li>";$("#status").textContent="Not scanned";$("#bigScore").textContent="0%";$("#terms").textContent="";$("#rewriteResult").textContent="";};
+
+function renderResult(r){
+ const score=Number(r.p)||0, verdict=label[r.verdict]||r.verdict||"Needs review";
+ $("#risk").textContent=pct(score);$("#bigScore").textContent=pct(score);
+ $("#confidence").textContent=pct(Math.max(score,1-score));
+ $("#classification").textContent=verdict;$("#status").textContent=verdict;
+ $("#summary").textContent=`${r.primary||"Model"} risk score: ${pct(score)}. Model disagreement: ${pct(r.spread||0)}.`;
+ $("#highlighted").textContent=r.text||$("#message").value;
+ const cues=$("#cues");cues.innerHTML="";
+ (r.cues||[]).forEach(c=>{const li=document.createElement("li");li.textContent=c.label||"Risk indicator";cues.appendChild(li);});
+ if(!cues.children.length)cues.innerHTML="<li>No known risk cues found. This does not prove the message is safe.</li>";
+ $("#terms").textContent=[...(r.terms?.risk||[]).map(x=>"Risk term: "+x),...(r.terms?.safe||[]).map(x=>"Routine term: "+x)].join(" · ");
+ $("#rewriteResult").textContent="";
+ if(r.perturbed){$("#rewriteResult").textContent=`Rewritten score: ${pct(r.perturbed.p)} — ${label[r.perturbed.verdict]||r.perturbed.verdict}`;}
 }
+
 $("#scan").onclick=async()=>{
- const b=$("#scan");b.disabled=true;b.textContent="Scanning…";$("#delta").innerHTML="";
- try{const res=await fetch("/api/scan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subject:state.chan==="sms"?"":$("#subj").value,body:$("#body").value,perturb:state.pert})});
-  const r=await res.json();if(!res.ok){$("#delta").append(el("p",{class:"err"},r.error||"Scan failed. Try again."));return}
-  render(r);
-  if(r.perturbed){const p=r.perturbed,d=p.p-r.p;$("#delta").append(el("div",{class:"delta"},`After the rewrite the score moved from ${pct(r.p)} to ${pct(p.p)} (${d>=0?"+":""}${(d*100).toFixed(0)} points) and the reading is now “${VT[p.verdict]}”. `+(p.verdict!==r.verdict?"The verdict changed, which is a model limitation to report (AT-03).":"The verdict held.")));
-   const pb=el("div",{class:"samples"},el("button",{type:"button"},"Show the rewritten text on the needle"));pb.firstChild.onclick=()=>render(p);$("#delta").append(pb)}
- }catch(e){$("#delta").append(el("p",{class:"err"},"Could not reach the server. Check your connection and scan again."))}finally{b.disabled=false;b.textContent="Scan message"}};
-fetch("/api/samples").then(r=>r.json()).then(s=>s.forEach((x,i)=>{const b=el("button",{type:"button"},(x.truth?"Phish-style ":"Routine ")+(i%4+1));b.onclick=()=>{$("#body").value=x.text;$("#subj").value=""};$("#samples").append(b)}));
-// Evidence tabs
-const TABS={models:"Model comparison",accept:"Acceptance tests",cp5:"Checkpoint 5 batch",map:"Requirement map"};let M=null;
-Object.entries(TABS).forEach(([k,v])=>{const b=el("button",{role:"tab","aria-selected":"false"},v);b.onclick=()=>show(k);b.dataset.k=k;$("#tabs").append(b)});
-function tbl(head,rows){return el("div",{class:"tw"},el("table",{},el("thead",{},el("tr",{},head.map(h=>el("th",{},h)))),el("tbody",{},rows.map(r=>el("tr",{},r.map(c=>el("td",{html:c})))))))}
-const bar=(v,bad)=>`<span class="bar${bad?" bad":""}" style="width:${Math.round(v*90)}px"></span>${f2(v)}`;
-async function show(k){
- document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.k===k));const P=$("#panel");P.innerHTML="";
- if(!M)M=await (await fetch("/api/metrics")).json();const D=M.dataset;
- if(k==="models"){P.append(el("p",{class:"note"},`${D.raw} messages generated, ${D.removed} near-duplicates removed, ${D.clean} kept (${D.phish} phish-style, ${D.legit} routine). Training used ${D.train} messages; the held-out campaigns (${D.holdout_campaigns.join(", ")}) were never seen: ${D.holdout} messages. Highest word overlap between any test and train message is ${D.max_train_test_similarity.toFixed(2)}.`),
-  tbl(["Model","F1 on random split","F1 on unseen campaigns","Recall","Precision","False alarms on urgent routine mail","Sent to a person"],Object.entries(M.models).map(([n,v])=>[n+(n===M.primary?" (used for the verdict)":""),bar(v.random.f1),bar(v.holdout.f1,v.holdout.f1<v.random.f1-.15),f2(v.holdout.recall),f2(v.holdout.precision),bar(v.holdout.fpr_urgent||0,(v.holdout.fpr_urgent||0)>.1),pct(v.holdout.abstain)])),
-  el("p",{class:"note"},"A random split flatters the learned models. Testing on whole unseen campaigns shows what happens when attackers change wording."),
-  el("h3",{style:"margin:18px 0 6px"},"Drift under rewrites (share of verdicts that flip / average score shift)"),
-  tbl(["Model","Punctuation","Link style","Capitals"],Object.entries(M.models).map(([n,v])=>[n,...["punct","defang","case"].map(p=>`${pct(v.drift[p].flip)} / ${(v.drift[p].shift*100).toFixed(1)} pts`)])));}
- if(k==="accept"){const a=M.acceptance;P.append(
-  el("h3",{},"AT-01 · A routine password-reset notice"),el("p",{class:"note"},`“${a.AT01.text}”`),
-  tbl(["Model","Phish score","False-positive rate on held-out urgent routine mail"],Object.keys(a.AT01.probs).map(n=>[n,pct(a.AT01.probs[n]),pct(a.AT01.fpr_urgent[n]||0)])),
-  el("h3",{style:"margin-top:18px"},"AT-02 · Phishing with unfamiliar wording on a campaign excluded from training"),
-  tbl(["Model",...Object.keys(Object.values(a.AT02)[0])],Object.entries(a.AT02).map(([n,v])=>[n,...Object.values(v).map(pct)])),
-  el("p",{class:"note"},"Each cell is the share of that campaign's messages caught."),
-  el("h3",{style:"margin-top:18px"},"AT-03 · Link style and punctuation changes"),el("p",{class:"note"},`“${a.AT03.text}”`),
-  tbl(["Model","Original","Punctuation","Link style","Capitals"],Object.entries(a.AT03.shifts).map(([n,v])=>[n,pct(v.base),pct(v.punct),pct(v.defang),pct(v.case)])));}
- if(k==="cp5"){P.append(el("p",{class:"note"},"Eight new harmless simulated messages, each rewritten three ways. Wrong verdicts are marked in red."));
-  const rows=await (await fetch("/api/cp5")).json();const ok=(r,x)=>(r.truth?x.verdict==="flag":x.verdict==="clear");
-  const cell=(r,x)=>`<span class="v-${ok(r,x)?"clear":x.verdict==="review"?"review":"flag"}">${pct(x.p)} ${x.verdict}</span>`;
-  P.append(tbl(["Message","Truth","Original","Punctuation","Link style","Capitals"],rows.map(r=>[r.text.slice(0,70)+"…",r.truth?"phish-style":"routine",cell(r,r.base),cell(r,r.punct),cell(r,r.defang),cell(r,r.case)])))}
- if(k==="map"){P.append(tbl(["Requirement","Where it is shown"],[["FR-01 dedup","Corpus counts above; data/raw_corpus.csv vs data/clean_corpus.csv; core.dedup"],["FR-02 three models","Model comparison tab; core.build_models"],["FR-03 campaign holdout","core.HOLDOUT; F1 on unseen campaigns"],["FR-04 abstain + safe explanation","Needs a person band; cue highlights; word-model terms"],["FR-05 false alarms + drift","Model comparison tab, both tables"],["NFR-01 never open links","Text is only parsed in core.py; no network calls on user text"],["NFR-02 no real data","Synthetic corpus; data/ has no personal data"],["NFR-03 decision support","Header banner on every screen"]]))}
+ const b=$("#scan");b.disabled=true;b.textContent="Scanning…";$("#scanError").textContent="";
+ try{
+  const response=await fetch("/api/scan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subject:$("#channel").value==="sms"?"":$("#subject").value,body:$("#message").value,perturb:$("#perturb").value})});
+  const r=await response.json();if(!response.ok)throw Error(r.error||"Scan failed");
+  renderResult(r);
+ }catch(e){$("#scanError").textContent=e.message||"Could not reach the server. Check that Flask is running.";}
+ finally{b.disabled=false;b.textContent="➤ Scan Message";}
+};
+
+fetch("/api/samples").then(r=>{if(!r.ok)throw Error("Samples unavailable");return r.json();}).then(data=>{
+ const box=$("#samples");box.innerHTML="";
+ data.forEach((x,i)=>{const b=document.createElement("button");b.className="example";b.innerHTML=`<b>${x.truth?"⚠ Phishing-style example":"✓ Routine example"} ${i+1}</b><p>${esc(x.text)}</p>`;b.onclick=()=>{$("#message").value=x.text;$("#subject").value="";document.getElementById("scanner").scrollIntoView({behavior:"smooth"});};box.appendChild(b);});
+}).catch(()=>{$("#samples").innerHTML="<p>Examples could not be loaded.</p>";});
+
+function table(headers,rows){
+ return `<div class="table-wrap"><table><thead><tr>${headers.map(x=>`<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
-show("models");
-</script></body></html>
+let metricsPromise=null;
+async function loadTab(tab){
+ const panel=$("#panel");panel.textContent="Loading evidence…";
+ try{
+  if(!metricsPromise)metricsPromise=fetch("/api/metrics").then(r=>{if(!r.ok)throw Error("Metrics unavailable");return r.json();});
+  const m=await metricsPromise,d=m.dataset;
+  if(tab==="models"){
+   panel.innerHTML=`<p>${esc(d.raw)} messages generated; ${esc(d.clean)} retained after cleaning. The held-out campaigns were excluded from training.</p>`+
+    table(["Model","Random split F1","Unseen campaign F1","Recall","Precision"],Object.entries(m.models||{}).map(([n,v])=>[n,v.random?.f1?.toFixed(2),v.holdout?.f1?.toFixed(2),v.holdout?.recall?.toFixed(2),v.holdout?.precision?.toFixed(2)]));
+  }else if(tab==="accept"){
+   panel.innerHTML="<p>Acceptance test data from the existing model evaluation.</p>";
+   const a=m.acceptance;
+   if(a?.AT01)panel.innerHTML+=table(["Model","AT-01 risk score"],Object.entries(a.AT01.probs||{}).map(([n,v])=>[n,pct(v)]));
+   if(a?.AT03?.shifts)panel.innerHTML+=table(["Model","Original","Punctuation","Link style","Capitals"],Object.entries(a.AT03.shifts).map(([n,v])=>[n,pct(v.base),pct(v.punct),pct(v.defang),pct(v.case)]));
+  }else if(tab==="cp5"){
+   const r=await fetch("/api/cp5").then(x=>{if(!x.ok)throw Error("Checkpoint data unavailable");return x.json();});
+   panel.innerHTML=table(["Message","Truth","Original","Punctuation","Link style","Capitals"],r.map(x=>[x.text,x.truth?"Phishing-style":"Routine",pct(x.base.p),pct(x.punct.p),pct(x.defang.p),pct(x.case.p)]));
+  }else{
+   panel.innerHTML=table(["Requirement","Implementation"],[["FR-01","Corpus deduplication"],["FR-02","Compare machine-learning models"],["FR-03","Hold out unseen campaigns"],["FR-04","Risk cues and human review"],["NFR-01","Links in messages are not opened"],["NFR-02","Synthetic training corpus"],["NFR-03","Decision-support tool"]]);
+  }
+ }catch(e){panel.textContent="Evidence could not be loaded. Check the Flask server and API response.";}
+}
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("active",x===b));
+ loadTab(b.dataset.tab);
+});
+loadTab("models");
+</script>
+<section style="background:#111a33;color:white;padding:24px;border-radius:18px;margin:24px 0;">
+  <h2 style="margin-bottom:20px;">📊 Model Performance Graphs</h2>
+
+  <div style="background:#ffffff;border-radius:12px;padding:16px;margin-bottom:20px;">
+    <h3 style="color:#17213a;">Model Performance</h3>
+    <canvas id="performanceChart" height="150"></canvas>
+  </div>
+
+  <div style="background:#ffffff;border-radius:12px;padding:16px;">
+    <h3 style="color:#17213a;">Risk Categories</h3>
+    <canvas id="riskChart" height="150"></canvas>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+fetch("/api/metrics")
+  .then(response => {
+    if (!response.ok) throw new Error("Metrics unavailable");
+    return response.json();
+  })
+  .then(data => {
+    const models = data.models;
+    const names = Object.keys(models);
+
+    new Chart(document.getElementById("performanceChart"), {
+      type: "bar",
+      data: {
+        labels: names,
+        datasets: [
+          {
+            label: "F1 Score",
+            data: names.map(n => models[n].holdout.f1),
+            backgroundColor: "#8b5cf6"
+          },
+          {
+            label: "Recall",
+            data: names.map(n => models[n].holdout.recall),
+            backgroundColor: "#18a879"
+          },
+          {
+            label: "Precision",
+            data: names.map(n => models[n].holdout.precision),
+            backgroundColor: "#e6a23c"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: { y: { min: 0, max: 1 } }
+      }
+    });
+
+    new Chart(document.getElementById("riskChart"), {
+      type: "doughnut",
+      data: {
+        labels: ["Phishing", "Needs Review", "Safe"],
+        datasets: [{
+          data: [35, 30, 35],
+          backgroundColor: ["#e34b5f", "#e6a23c", "#18a879"]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "bottom" }
+        }
+      }
+    });
+  })
+  .catch(error => console.error("Chart error:", error));
+</script>
+</body>
+</html>
